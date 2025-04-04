@@ -1,4 +1,14 @@
 services:
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    deploy:
+      replicas: 1
+    networks:
+      - app-network
   query-service:
     build:
       context: ./query-service
