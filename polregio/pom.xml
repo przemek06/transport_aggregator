@@ -54,6 +54,16 @@
 			<artifactId>spring-rabbit-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-java</artifactId>
+			<version>4.31.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.github.bonigarcia</groupId>
+			<artifactId>webdrivermanager</artifactId>
+			<version>6.0.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>

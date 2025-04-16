@@ -75,7 +75,7 @@ public class RPCClient {
                     sink.complete();
                     container.stop();
                     logger.info("Reply timeout");
-                }, 5, TimeUnit.SECONDS);
+                }, 10, TimeUnit.SECONDS);
 
             } catch (Exception e) {
                 sink.complete();
