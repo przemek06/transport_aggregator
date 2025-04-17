@@ -1,8 +1,5 @@
 package edu.pg.query.dto;
 
-import edu.pg.polregio.dto.VehicleDto;
-import edu.pg.polregio.dto.VehicleType;
-
 import java.util.Date;
 import java.util.List;
 

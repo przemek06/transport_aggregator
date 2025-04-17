@@ -9,12 +9,13 @@ function Main() {
   const handleSearch = () => {
     setResults([]);
     const eventSource = new EventSource(`http://localhost:8080/query/offers/src/${encodeURIComponent(src)}/dest/${encodeURIComponent(dest)}/time/${encodeURIComponent(time)}`, {
-      withCredentials: true 
+      withCredentials: true
     });
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      setResults((prevResults) => [...prevResults, data]);
+      setResults((prevResults) => [...prevResults, ...data]);
+      console.log('New offers received:', data);
     };
 
     eventSource.onerror = (error) => {
@@ -23,7 +24,7 @@ function Main() {
     };
 
     return () => {
-        eventSource.close();
+      eventSource.close();
     };
   };
 
@@ -52,23 +53,47 @@ function Main() {
               <tr>
                 <th>Source</th>
                 <th>Destination</th>
-                <th>Time</th>
+                <th>Start Time</th>
+                <th>End Time</th>
                 <th>Cost</th>
+                <th>Type</th>
+                {/* <th>Vehicles</th> */}
               </tr>
             </thead>
             <tbody>
-              {results.map((result, outerIndex) => (
-                result.map((row, index) => (
-                <tr key={outerIndex*result.length + index}>
-                  <td>{row.src}</td>
-                  <td>{row.dest}</td>
-                  <td>{row.time}</td>
-                  <td>{row.cost}</td>
-                  </tr>
-                ))
+              {results.map((offer, offerIndex) => (
+                <tr key={offerIndex}>
+                  <td>{offer.src}</td>
+                  <td>{offer.dest}</td>
+                  <td>{new Date(offer.startTime).toLocaleString()}</td>
+                  <td>{new Date(offer.endTime).toLocaleString()}</td>
+                  <td>{offer.cost}</td>
+                  <td>{offer.type}</td>
+                  {/* <td>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Vehicle ID</th>
+                          <th>Start</th>
+                          <th>End</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {offer.vehicles.map((vehicle, vIndex) => (
+                          <tr key={vIndex}>
+                            <td>{vehicle.id}</td>
+                            <td>{new Date(vehicle.start).toLocaleString()}</td>
+                            <td>{new Date(vehicle.end).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </td> */}
+                </tr>
               ))}
             </tbody>
           </table>
+
         </div>
       )}
     </div>

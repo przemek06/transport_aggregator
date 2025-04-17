@@ -6,15 +6,13 @@ import edu.pg.polregio.dto.VehicleDto;
 import edu.pg.polregio.dto.VehicleType;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.annotation.PostConstruct;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.locators.RelativeLocator;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -35,6 +33,8 @@ public class WebScraper {
 
     private static final String URL = "https://polregio.pl/pl/";
     private String downloadDir = "";
+
+    private Logger logger = LoggerFactory.getLogger(WebScraper.class);
 
     @PostConstruct
     public void init() {
@@ -62,34 +62,46 @@ public class WebScraper {
         prefs.put("safebrowsing.enabled", true);
         prefs.put("safebrowsing.disable_download_protection", true);
         options.setExperimentalOption("prefs", prefs);
-        options.addArguments("--headless");
-        options.addArguments("--disable-gpu");
+        options.addArguments("--headless=new");
         options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--disable-extensions");
         WebDriver webDriver = new ChromeDriver(options);
         webDriver.get(URL);
 
-        WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(5, ChronoUnit.SECONDS));
+        WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(1, ChronoUnit.SECONDS));
 
         WebElement cookieConfirm = wait.until(
                 ExpectedConditions.visibilityOfElementLocated(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")));
         cookieConfirm.click();
 
+        logger.info("1");
+
         WebElement searchForm = wait.until(
                 ExpectedConditions.visibilityOfElementLocated(By.className("koleo-widget")));
 
         String src = inputStartLocation(webDriver, searchForm, source);
+        logger.info("2");
         String dest = inputEndLocation(webDriver, searchForm, destination);
+        logger.info("3");
         inputDate(searchForm, time);
+        logger.info("4");
         search(searchForm);
+        logger.info("5");
 
-        WebElement results = wait.until(
+        WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(4, ChronoUnit.SECONDS));
+        WebElement results = longerWait.until(
                 ExpectedConditions.visibilityOfElementLocated(By.className("search-results"))
         );
+        logger.info("6");
 
         List<WebElement> connections = results.findElements(By.className("day-connections"))
                 .stream()
                 .flatMap(dayConnection -> dayConnection.findElements(By.className("has-train-nr")).stream())
                 .toList();
+        logger.info("7");
+
         List<WebElement> relevantConnections = connections.stream()
                 .limit(3)
                 .toList();
@@ -107,36 +119,71 @@ public class WebScraper {
         return inputAutoComplete(webDriver, searchForm, dest, "end_station");
     }
 
-    private String inputAutoComplete(WebDriver webDriver, WebElement searchForm, String input, String className) {
-        WebElement bar = searchForm.findElement(By.className(className));
+    private String inputAutoComplete(WebDriver driver,
+                                     WebElement searchForm,
+                                     String input,
+                                     String className) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(1));
+
+        WebElement bar = wait.until(d ->
+                searchForm.findElements(By.className(className))
+                        .stream()
+                        .filter(WebElement::isDisplayed)
+                        .findFirst()
+                        .orElse(null)
+        );
+
+        WebElement container = (WebElement)((JavascriptExecutor) driver)
+                .executeScript("return arguments[0].parentElement;", searchForm);
 
         bar.click();
+        bar.clear();
         bar.sendKeys(input);
 
-        WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(5, ChronoUnit.SECONDS));
+        WebElement autocompleteElement = null;
 
-        WebElement autocompleteElement = wait.until(driver -> {
+        for (int attempt = 1; attempt <= 5; attempt++) {
             try {
-                WebElement elem = driver.findElement(
-                        RelativeLocator.with(By.className("autocomplete")).near(bar)
-                );
-                return elem.isDisplayed() ? elem : null;
-            } catch (NoSuchElementException e) {
-                return null;
+                autocompleteElement = wait.until(d -> {
+                    for (WebElement el : container.findElements(By.className("autocomplete"))) {
+                        if (el.isDisplayed() && el.isEnabled() && isInteractable(el, driver)) {
+                            return el;
+                        }
+                    }
+                    return null;
+                });
+                break;
+            } catch (TimeoutException e) {
+                driver.findElement(By.cssSelector("body")).click();
+                bar.click();
+                bar.clear();
+                bar.sendKeys(input);
             }
-        });
+        }
 
-        List<WebElement> children = autocompleteElement.findElements(By.xpath("./*"));
+        if (autocompleteElement == null) {
+            return "";
+        }
 
-        if (!children.isEmpty()) {
-            String result = children.getFirst().getText();
-            children.getFirst().click();
+        List<WebElement> items = autocompleteElement.findElements(By.xpath("./*"));
+        if (!items.isEmpty()) {
+            String result = items.get(0).getText();
+            items.get(0).click();
             return result;
         }
 
         return "";
     }
-
+    
+    private boolean isInteractable(WebElement element, WebDriver driver) {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        return (Boolean) js.executeScript(
+                "const el = arguments[0];" +
+                        "const style = window.getComputedStyle(el);" +
+                        "return style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && el.offsetParent !== null;",
+                element
+        );
+    }
     private void inputDate(WebElement searchForm, Date date) {
         WebElement dateInput = searchForm.findElement(By.className("date"));
         dateInput.clear();
@@ -182,7 +229,7 @@ public class WebScraper {
     }
 
     private OfferDto map(WebDriver webDriver, WebElement connection, String src, String dest) {
-        WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(5, ChronoUnit.SECONDS));
+        WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(2, ChronoUnit.SECONDS));
 
         connection = wait.until(
                 ExpectedConditions.elementToBeClickable(connection)
@@ -253,7 +300,7 @@ public class WebScraper {
 
     private Date getDay(WebElement connection, WebDriver webDriver) {
         try {
-            WebDriverWait wait = new WebDriverWait(webDriver, Duration.ofSeconds(10));
+            WebDriverWait wait = new WebDriverWait(webDriver, Duration.ofSeconds(1));
             WebElement calendar = wait.until(ExpectedConditions.visibilityOfNestedElementsLocatedBy(
                     connection,
                     By.className("add-to-calendar")
