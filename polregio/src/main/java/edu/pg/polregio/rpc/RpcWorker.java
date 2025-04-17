@@ -37,8 +37,10 @@ public class RpcWorker {
             logger.info("Received request with correlationId={}", correlationId);
 
             QueryDto query = objectMapper.readValue(request.getBody(), QueryDto.class);
+            logger.info("Query = {}", query);
+
             List<OfferDto> response = new ArrayList<>();
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 10; i++) {
                 try {
                     response = webScraper.getOffers(query);
                     break;

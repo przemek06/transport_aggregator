@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,31 +77,24 @@ public class WebScraper {
                 ExpectedConditions.visibilityOfElementLocated(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")));
         cookieConfirm.click();
 
-        logger.info("1");
-
         WebElement searchForm = wait.until(
                 ExpectedConditions.visibilityOfElementLocated(By.className("koleo-widget")));
 
         String src = inputStartLocation(webDriver, searchForm, source);
-        logger.info("2");
         String dest = inputEndLocation(webDriver, searchForm, destination);
-        logger.info("3");
-        inputDate(searchForm, time);
-        logger.info("4");
+        inputDate(searchForm, time, webDriver);
         search(searchForm);
-        logger.info("5");
+        logger.info("Waiting for results");
 
-        WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(4, ChronoUnit.SECONDS));
+        WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(5, ChronoUnit.SECONDS));
         WebElement results = longerWait.until(
                 ExpectedConditions.visibilityOfElementLocated(By.className("search-results"))
         );
-        logger.info("6");
 
         List<WebElement> connections = results.findElements(By.className("day-connections"))
                 .stream()
                 .flatMap(dayConnection -> dayConnection.findElements(By.className("has-train-nr")).stream())
                 .toList();
-        logger.info("7");
 
         List<WebElement> relevantConnections = connections.stream()
                 .limit(3)
@@ -133,7 +127,7 @@ public class WebScraper {
                         .orElse(null)
         );
 
-        WebElement container = (WebElement)((JavascriptExecutor) driver)
+        WebElement container = (WebElement) ((JavascriptExecutor) driver)
                 .executeScript("return arguments[0].parentElement;", searchForm);
 
         bar.click();
@@ -174,7 +168,7 @@ public class WebScraper {
 
         return "";
     }
-    
+
     private boolean isInteractable(WebElement element, WebDriver driver) {
         JavascriptExecutor js = (JavascriptExecutor) driver;
         return (Boolean) js.executeScript(
@@ -184,14 +178,14 @@ public class WebScraper {
                 element
         );
     }
-    private void inputDate(WebElement searchForm, Date date) {
+
+    private void inputDate(WebElement searchForm, Date date, WebDriver webDriver) {
         WebElement dateInput = searchForm.findElement(By.className("date"));
-        dateInput.clear();
         String format = "dd-MM-yyyy HH:mm";
         SimpleDateFormat sdf = new SimpleDateFormat(format);
         String dateStr = sdf.format(date);
-        dateInput.sendKeys(dateStr);
-        dateInput.click();
+        JavascriptExecutor js = (JavascriptExecutor) webDriver;
+        js.executeScript("arguments[0].value='%s';".formatted(dateStr), dateInput);
     }
 
     private void search(WebElement searchForm) {
@@ -237,9 +231,9 @@ public class WebScraper {
         connection.click();
 
         Date day = getDay(connection, webDriver);
-
         Date startTime = combineDateAndTime(day, extractStartTime(connection));
-        Date endTime = combineDateAndTime(day, extractEndTime(connection));
+        int minutes = getDuration(connection);
+        Date endTime = addToDate(startTime, minutes);
 
         Double cost = getPrice(connection);
 
@@ -257,6 +251,20 @@ public class WebScraper {
 
     }
 
+    private int getDuration(WebElement connection) {
+        WebElement time = connection.findElement(By.className("travel-time-value"));
+        return parseDuration(time.getAttribute("innerHTML"));
+    }
+
+    public static int parseDuration(String timeStr) {
+        timeStr = timeStr.trim().toLowerCase();
+        String[] parts = timeStr.split("h");
+        int hours = Integer.parseInt(parts[0]);
+        int minutes = Integer.parseInt(parts[1]);
+
+        return hours * 60 + minutes;
+    }
+
     private List<VehicleDto> getVehicles(WebElement connection, Date day, Date start, Date end) {
         List<WebElement> trains = connection.findElements(By.className("train"));
 
@@ -269,21 +277,35 @@ public class WebScraper {
             );
         }
 
+        AtomicReference<Date> previousTime = new AtomicReference<>();
         return trains.stream()
-                .map(train -> getVehicle(train, day))
+                .map(train -> getVehicle(train, day, previousTime.get()))
+                .peek(v -> {
+                    previousTime.set(v.end());
+                })
                 .toList();
     }
 
-    private VehicleDto getVehicle(WebElement train, Date day) {
+    private VehicleDto getVehicle(WebElement train, Date day, Date previousTime) {
         WebElement id = train.findElement(By.className("train-number-details"));
         List<WebElement> times = train.findElements(By.className("scheduled-part"));
         WebElement start = times.getFirst();
         WebElement end = times.getLast();
+        Date startDate = combineDateAndTime(day, extractTime(start.getAttribute("innerHTML")));
+        Date endDate = combineDateAndTime(day, extractTime(end.getAttribute("innerHTML")));
+
+        if (previousTime != null && previousTime.after(startDate)) {
+            startDate = addToDate(startDate, 1440);
+        }
+
+        if (endDate != null && endDate.before(startDate)) {
+            endDate = addToDate(endDate, 1440);
+        }
 
         return new VehicleDto(
                 id.getAttribute("innerHTML"),
-                combineDateAndTime(day, extractTime(start.getAttribute("innerHTML"))),
-                combineDateAndTime(day, extractTime(end.getAttribute("innerHTML")))
+                startDate,
+                endDate
         );
     }
 
@@ -300,7 +322,7 @@ public class WebScraper {
 
     private Date getDay(WebElement connection, WebDriver webDriver) {
         try {
-            WebDriverWait wait = new WebDriverWait(webDriver, Duration.ofSeconds(1));
+            WebDriverWait wait = new WebDriverWait(webDriver, Duration.ofSeconds(10));
             WebElement calendar = wait.until(ExpectedConditions.visibilityOfNestedElementsLocatedBy(
                     connection,
                     By.className("add-to-calendar")
@@ -383,4 +405,10 @@ public class WebScraper {
         }
     }
 
+    private Date addToDate(Date date, int minutes) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(Calendar.MINUTE, minutes);
+        return calendar.getTime();
+    }
 }
