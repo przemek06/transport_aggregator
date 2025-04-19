@@ -50,59 +50,70 @@ public class WebScraper {
     }
 
     public List<OfferDto> getOffers(QueryDto query) {
-        String source = query.src();
-        String destination = query.dest();
-        Date time = query.time();
+        WebDriver webDriver = null;
+        try {
+            String source = query.src();
+            String destination = query.dest();
+            Date time = query.time();
 
-        WebDriverManager.chromedriver().setup();
-        ChromeOptions options = new ChromeOptions();
-        Map<String, Object> prefs = new HashMap<>();
-        prefs.put("download.default_directory", downloadDir);
-        prefs.put("download.prompt_for_download", false);
-        prefs.put("profile.default_content_settings.popups", 0);
-        prefs.put("safebrowsing.enabled", true);
-        prefs.put("safebrowsing.disable_download_protection", true);
-        options.setExperimentalOption("prefs", prefs);
-        options.addArguments("--headless=new");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--disable-gpu");
-        options.addArguments("--disable-extensions");
-        WebDriver webDriver = new ChromeDriver(options);
-        webDriver.get(URL);
+            WebDriverManager.chromedriver().setup();
+            ChromeOptions options = new ChromeOptions();
+            Map<String, Object> prefs = new HashMap<>();
+            prefs.put("download.default_directory", downloadDir);
+            prefs.put("download.prompt_for_download", false);
+            prefs.put("profile.default_content_settings.popups", 0);
+            prefs.put("safebrowsing.enabled", true);
+            prefs.put("safebrowsing.disable_download_protection", true);
+            options.setExperimentalOption("prefs", prefs);
+            options.addArguments("--headless=new");
+            options.addArguments("--no-sandbox");
+            options.addArguments("--disable-dev-shm-usage");
+            options.addArguments("--disable-gpu");
+            options.addArguments("--disable-extensions");
+            webDriver = new ChromeDriver(options);
+            webDriver.get(URL);
 
-        WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(1, ChronoUnit.SECONDS));
+            WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(1, ChronoUnit.SECONDS));
 
-        WebElement cookieConfirm = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")));
-        cookieConfirm.click();
+            WebElement cookieConfirm = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")));
+            cookieConfirm.click();
 
-        WebElement searchForm = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.className("koleo-widget")));
+            WebElement searchForm = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.className("koleo-widget")));
 
-        String src = inputStartLocation(webDriver, searchForm, source);
-        String dest = inputEndLocation(webDriver, searchForm, destination);
-        inputDate(searchForm, time, webDriver);
-        search(searchForm);
-        logger.info("Waiting for results");
+            String src = inputStartLocation(webDriver, searchForm, source);
+            String dest = inputEndLocation(webDriver, searchForm, destination);
+            inputDate(searchForm, time, webDriver);
+            search(searchForm);
+            logger.info("Waiting for results");
 
-        WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(5, ChronoUnit.SECONDS));
-        WebElement results = longerWait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.className("search-results"))
-        );
+            WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(5, ChronoUnit.SECONDS));
+            WebElement results = longerWait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.className("search-results"))
+            );
 
-        List<WebElement> connections = results.findElements(By.className("day-connections"))
-                .stream()
-                .flatMap(dayConnection -> dayConnection.findElements(By.className("has-train-nr")).stream())
-                .toList();
+            List<WebElement> connections = results.findElements(By.className("day-connections"))
+                    .stream()
+                    .flatMap(dayConnection -> dayConnection.findElements(By.className("has-train-nr")).stream())
+                    .toList();
 
-        List<WebElement> relevantConnections = connections.stream()
-                .limit(3)
-                .toList();
+            List<WebElement> relevantConnections = connections.stream()
+                    .limit(3)
+                    .toList();
 
-        return relevantConnections.stream()
-                .map(connection -> map(webDriver, connection, src, dest))
-                .toList();
+            WebDriver finalWebDriver = webDriver;
+            return relevantConnections.stream()
+                    .map(connection -> map(finalWebDriver, connection, src, dest))
+                    .toList();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (webDriver != null) {
+                webDriver.quit();
+            }
+        }
+
     }
 
     private String inputStartLocation(WebDriver webDriver, WebElement searchForm, String src) {
