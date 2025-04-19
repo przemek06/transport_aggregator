@@ -17,6 +17,15 @@ services:
     networks:
       - app-network
 
+  booking-service:
+    build:
+      context: ./booking
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 1
+    networks:
+      - app-network
+
   polregio-scraper:
     build:
       context: ./polregio
@@ -69,7 +78,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-
 
 networks:
   app-network:

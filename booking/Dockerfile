@@ -12,8 +12,8 @@ FROM openjdk:21-jdk
 
 WORKDIR /app
 
-COPY --from=builder /app/target/query-0.0.1-SNAPSHOT.jar /app/query-0.0.1-SNAPSHOT.jar
+COPY --from=builder /app/target/booking-0.0.1-SNAPSHOT.jar /app/booking-0.0.1-SNAPSHOT.jar
 
-EXPOSE 8081
+EXPOSE 8090
 
-ENTRYPOINT ["java", "-jar", "query-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "booking-0.0.1-SNAPSHOT.jar"]

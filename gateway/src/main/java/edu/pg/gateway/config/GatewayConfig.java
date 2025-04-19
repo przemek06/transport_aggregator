@@ -14,6 +14,9 @@ public class GatewayConfig {
                 .route("query-service-route", r -> r.path("/query/**")
                         .filters(f -> f.addRequestHeader("X-Gateway-Route", "query-service"))
                         .uri("http://query-service:8081"))
+                .route("booking-service-route", r -> r.path("/reservations/**")
+                        .filters(f -> f.addRequestHeader("X-Gateway-Route", "booking-service"))
+                        .uri("http://booking-service:8090"))
                 .build();
     }
 }

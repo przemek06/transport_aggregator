@@ -198,11 +198,6 @@ public class WebScraper {
         return time.getText();
     }
 
-    private String extractEndTime(WebElement connection) {
-        WebElement time = connection.findElements(By.className("scheduled-part")).getLast();
-        return time.getText();
-    }
-
     private Double getPrice(WebElement connection) {
         WebElement price = connection.findElement(By.className("price-parts"));
         String text = price.getAttribute("innerHTML") != null ? price.getAttribute("innerHTML") : "00,00";
@@ -258,11 +253,16 @@ public class WebScraper {
 
     public static int parseDuration(String timeStr) {
         timeStr = timeStr.trim().toLowerCase();
-        String[] parts = timeStr.split("h");
-        int hours = Integer.parseInt(parts[0]);
-        int minutes = Integer.parseInt(parts[1]);
+        if (timeStr.contains("h")) {
+            String[] parts = timeStr.split("h");
+            int hours = Integer.parseInt(parts[0]);
+            int minutes = Integer.parseInt(parts[1]);
+            return hours * 60 + minutes;
+        }
 
-        return hours * 60 + minutes;
+        String[] parts = timeStr.split(" ");
+        int minutes = Integer.parseInt(parts[0]);
+        return minutes;
     }
 
     private List<VehicleDto> getVehicles(WebElement connection, Date day, Date start, Date end) {
@@ -342,7 +342,7 @@ public class WebScraper {
             return result;
         } catch (Exception e) {
             e.printStackTrace();
-            return new Date();
+            throw new RuntimeException("Error while loading/parsing dates");
         }
     }
 
@@ -362,7 +362,7 @@ public class WebScraper {
             return sdf.parse(dateTimeStr);
         }
 
-        return null;
+        throw new RuntimeException("Error while loading/parsing dates");
     }
 
     public File waitForFileDownload(Path dir, String expectedFileName) throws InterruptedException {
@@ -401,7 +401,7 @@ public class WebScraper {
 
             return dateCal.getTime();
         } catch (Exception e) {
-            return null;
+            throw new RuntimeException("Error while loading/parsing dates");
         }
     }
 
