@@ -40,6 +40,20 @@ services:
     networks:
       - app-network
 
+  intercity-scraper:
+    build:
+      context: ./intercity
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      query-service:
+        condition: service_healthy
+    networks:
+      - app-network
+
   gateway:
     build:
       context: ./gateway

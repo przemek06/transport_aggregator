@@ -73,7 +73,7 @@ public class WebScraper {
             webDriver = new ChromeDriver(options);
             webDriver.get(URL);
 
-            WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(1, ChronoUnit.SECONDS));
+            WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(5, ChronoUnit.SECONDS));
 
             WebElement cookieConfirm = wait.until(
                     ExpectedConditions.visibilityOfElementLocated(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")));
@@ -88,7 +88,7 @@ public class WebScraper {
             search(searchForm);
             logger.info("Waiting for results");
 
-            WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(5, ChronoUnit.SECONDS));
+            WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(15, ChronoUnit.SECONDS));
             WebElement results = longerWait.until(
                     ExpectedConditions.visibilityOfElementLocated(By.className("search-results"))
             );
@@ -128,7 +128,7 @@ public class WebScraper {
                                      WebElement searchForm,
                                      String input,
                                      String className) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(1));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
 
         WebElement bar = wait.until(d ->
                 searchForm.findElements(By.className(className))
@@ -229,7 +229,7 @@ public class WebScraper {
     }
 
     private OfferDto map(WebDriver webDriver, WebElement connection, String src, String dest) {
-        WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(2, ChronoUnit.SECONDS));
+        WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(20, ChronoUnit.SECONDS));
 
         connection = wait.until(
                 ExpectedConditions.elementToBeClickable(connection)
@@ -333,7 +333,7 @@ public class WebScraper {
 
     private Date getDay(WebElement connection, WebDriver webDriver) {
         try {
-            WebDriverWait wait = new WebDriverWait(webDriver, Duration.ofSeconds(10));
+            WebDriverWait wait = new WebDriverWait(webDriver, Duration.ofSeconds(20));
             WebElement calendar = wait.until(ExpectedConditions.visibilityOfNestedElementsLocatedBy(
                     connection,
                     By.className("add-to-calendar")
