@@ -63,7 +63,9 @@ public class WebScraper {
         prefs.put("safebrowsing.enabled", true);
         prefs.put("safebrowsing.disable_download_protection", true);
         options.setExperimentalOption("prefs", prefs);
-        //options.addArguments("--headless=new");
+        options.addArguments("--headless=chrome");
+        options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36");
+        options.addArguments("--window-size=1920,1080");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--disable-gpu");
@@ -93,7 +95,7 @@ public class WebScraper {
         search(searchForm);
         logger.info("Waiting for results");
 
-        WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(15, ChronoUnit.SECONDS));
+        WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(20, ChronoUnit.SECONDS));
         cookieConfirm = longerWait.until(
                 ExpectedConditions.visibilityOfElementLocated(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")));
         cookieConfirm.click();
