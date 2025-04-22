@@ -15,6 +15,6 @@ WORKDIR /app
 # Update the JAR file name below to match your artifact name
 COPY --from=builder /app/target/eureka-server-0.0.1-SNAPSHOT.jar /app/eureka-server-0.0.1-SNAPSHOT.jar
 
-EXPOSE 8080
+EXPOSE 8761
 
 ENTRYPOINT ["java", "-jar", "eureka-server-0.0.1-SNAPSHOT.jar"]

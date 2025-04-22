@@ -7,9 +7,13 @@ import org.springframework.context.annotation.Configuration;
 import com.netflix.discovery.EurekaClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.netflix.appinfo.InstanceInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Configuration
 public class GatewayConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(GatewayConfig.class);
 
     @Autowired
     private EurekaClient eurekaClient;
@@ -18,8 +22,10 @@ public class GatewayConfig {
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         InstanceInfo queryServiceInstance = eurekaClient.getNextServerFromEureka("query", false);
         String queryServiceUrl = queryServiceInstance.getHomePageUrl();
+        logger.info("Query service URL={}", queryServiceUrl);
         InstanceInfo bookingServiceInstance = eurekaClient.getNextServerFromEureka("booking", false);
         String bookingServiceUrl = bookingServiceInstance.getHomePageUrl();
+        logger.info("Booking service URL={}", bookingServiceUrl);
         return builder.routes()
                 .route("query-service-route", r -> r.path("/query/**")
                         .filters(f -> f.addRequestHeader("X-Gateway-Route", "query-service"))
