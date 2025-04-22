@@ -29,7 +29,7 @@ public class RpcWorker {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final WebScraper webScraper;
 
-    @RabbitListener(queues = "rpc.queue.polregio")
+    @RabbitListener(queues = "rpc.queue.flixbus")
     public void handleRequest(Message request) {
         String correlationId = request.getMessageProperties().getCorrelationId();
 

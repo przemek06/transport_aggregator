@@ -15,17 +15,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,59 +46,68 @@ public class WebScraper {
     }
 
     public List<OfferDto> getOffers(QueryDto query) {
-        String source = query.src();
-        String destination = query.dest();
-        Date time = query.time();
+        WebDriver webDriver = null;
+        try {
+            String source = query.src();
+            String destination = query.dest();
+            Date time = query.time();
 
-        WebDriverManager.chromedriver().setup();
-        ChromeOptions options = new ChromeOptions();
-        Map<String, Object> prefs = new HashMap<>();
-        prefs.put("download.default_directory", downloadDir);
-        prefs.put("download.prompt_for_download", false);
-        prefs.put("profile.default_content_settings.popups", 0);
-        prefs.put("safebrowsing.enabled", true);
-        prefs.put("safebrowsing.disable_download_protection", true);
-        options.setExperimentalOption("prefs", prefs);
-        options.addArguments("--headless=new");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--disable-gpu");
-        options.addArguments("--disable-extensions");
-        WebDriver webDriver = new ChromeDriver(options);
-        webDriver.get(URL);
+            WebDriverManager.chromedriver().setup();
+            ChromeOptions options = new ChromeOptions();
+            Map<String, Object> prefs = new HashMap<>();
+            prefs.put("download.default_directory", downloadDir);
+            prefs.put("download.prompt_for_download", false);
+            prefs.put("profile.default_content_settings.popups", 0);
+            prefs.put("safebrowsing.enabled", true);
+            prefs.put("safebrowsing.disable_download_protection", true);
+            options.setExperimentalOption("prefs", prefs);
+            options.addArguments("--headless=new");
+            options.addArguments("--no-sandbox");
+            options.addArguments("--disable-dev-shm-usage");
+            options.addArguments("--disable-gpu");
+            options.addArguments("--disable-extensions");
+            webDriver = new ChromeDriver(options);
+            webDriver.get(URL);
 
-        WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(20, ChronoUnit.SECONDS));
+            WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(20, ChronoUnit.SECONDS));
 
-        JavascriptExecutor js = (JavascriptExecutor) webDriver;
-        js.executeScript("document.getElementById('usercentrics-root')?.remove();");
+            JavascriptExecutor js = (JavascriptExecutor) webDriver;
+            js.executeScript("document.getElementById('usercentrics-root')?.remove();");
 
-        WebElement searchForm = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.className("z80U6")));
+            WebElement searchForm = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.className("z80U6")));
 
-        String src = inputStartLocation(webDriver, searchForm, source);
-        String dest = inputEndLocation(webDriver, searchForm, destination);
-        inputDate(searchForm, time, webDriver);
+            String src = inputStartLocation(webDriver, searchForm, source);
+            String dest = inputEndLocation(webDriver, searchForm, destination);
+            inputDate(searchForm, time, webDriver);
 
-        search(searchForm, webDriver);
+            search(searchForm, webDriver);
 
-        logger.info("Waiting for results");
+            logger.info("Waiting for results");
 
-        WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(20, ChronoUnit.SECONDS));
-        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("hcr-skeleton-12-2-0")));
+            WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(20, ChronoUnit.SECONDS));
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("hcr-skeleton-12-2-0")));
 
-        logger.info("current URL: " + webDriver.getCurrentUrl());
+            logger.info("current URL: " + webDriver.getCurrentUrl());
 
-        WebElement results = longerWait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.className("ResultsList__resultsList___eGsLK"))
-        );
-        List<WebElement> connections = results.findElements(By.cssSelector("[data-e2e='search-result-departure-station']"));
+            WebElement results = longerWait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.className("ResultsList__resultsList___eGsLK"))
+            );
+            List<WebElement> connections = results.findElements(By.cssSelector("[data-e2e='search-result-departure-station']"));
 
-        List<OfferDto> finalList = new ArrayList<OfferDto>();
-        for(WebElement connection : results.findElements(By.className("SearchResult__searchResult___cgxzZ"))) {
-            finalList.add(map(webDriver, connection, src, dest, time));
+            List<OfferDto> finalList = new ArrayList<OfferDto>();
+            for (WebElement connection : results.findElements(By.className("SearchResult__searchResult___cgxzZ"))) {
+                finalList.add(map(webDriver, connection, src, dest, time));
+            }
+
+            return finalList;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (webDriver != null) {
+                webDriver.quit();
+            }
         }
-
-        return finalList;
     }
 
     private String inputStartLocation(WebDriver webDriver, WebElement searchForm, String src) {
