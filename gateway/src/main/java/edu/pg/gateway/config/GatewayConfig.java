@@ -4,6 +4,9 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.netflix.discovery.EurekaClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.netflix.appinfo.InstanceInfo;
 
 @Configuration
 public class GatewayConfig {
@@ -13,16 +16,17 @@ public class GatewayConfig {
 
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
-        InstanceInfo instance =
-                eurekaClient.getNextServerFromEureka("query", false);
-        String queryServiceUrl = instance.getHomePageUrl();
+        InstanceInfo queryServiceInstance = eurekaClient.getNextServerFromEureka("query", false);
+        String queryServiceUrl = queryServiceInstance.getHomePageUrl();
+        InstanceInfo bookingServiceInstance = eurekaClient.getNextServerFromEureka("booking", false);
+        String bookingServiceUrl = bookingServiceInstance.getHomePageUrl();
         return builder.routes()
                 .route("query-service-route", r -> r.path("/query/**")
                         .filters(f -> f.addRequestHeader("X-Gateway-Route", "query-service"))
                         .uri(queryServiceUrl))
                 .route("booking-service-route", r -> r.path("/reservations/**")
                         .filters(f -> f.addRequestHeader("X-Gateway-Route", "booking-service"))
-                        .uri("http://booking-service:8090"))
+                        .uri(bookingServiceUrl))
                 .build();
     }
 }
