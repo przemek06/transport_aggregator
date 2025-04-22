@@ -245,11 +245,6 @@ public class WebScraper {
         return 0.0;
     }
 
-    private String getVehicleId(WebElement connection) {
-        WebElement vehicleId = connection.findElement(By.className("train-number-details"));
-        return vehicleId.getAttribute("innerHTML");
-    }
-
     private OfferDto map(WebDriver webDriver, WebElement connection, String src, String dest, Date time) {
 
         Date day = time;
@@ -258,7 +253,7 @@ public class WebScraper {
 
         Double cost = getPrice(connection);
 
-        List<VehicleDto> vehicles = getVehicles(connection, day, startTime, endTime);
+        List<VehicleDto> vehicles = getVehicles(connection, day, src, dest, startTime, endTime);
 
         return new OfferDto(
                 src,
@@ -291,10 +286,10 @@ public class WebScraper {
         return minutes;
     }
 
-    private List<VehicleDto> getVehicles(WebElement connection, Date day, Date start, Date end) {
+    private List<VehicleDto> getVehicles(WebElement connection, Date day, String src, String dest, Date start, Date end) {
         return Collections.singletonList(
                 new VehicleDto(
-                        "FlixBus", start, end
+                        "Flix_"+src+"_"+dest, start, end
                 )
         );
     }
