@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface VehicleReservationRepository extends JpaRepository<VehicleReservation, Long> {
 
-    List<VehicleReservation> findByVehicleIdAndEndTimeGreaterThanAndStartTimeLessThan(
+    List<VehicleReservation> findByVehicleIdAndEndTimeGreaterThanEqualAndStartTimeLessThanEqual(
             String vehicleId,
             Date segmentStartTime,
             Date segmentEndTime

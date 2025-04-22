@@ -24,11 +24,13 @@ public class Reservation {
     private String username;
     private Date startTime;
     private Date endTime;
+    private String src;
+    private String dest;
     private Instant reservationTime;
 
     public ReservationDto toDto() {
         return new ReservationDto(
-                id, username, startTime, endTime, reservationTime
+                id, username, startTime, endTime, src, dest, reservationTime
         );
     }
 }

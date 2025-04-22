@@ -56,11 +56,19 @@ public class SecurityConfig {
 
     @Bean
     public MapReactiveUserDetailsService userDetailsService() {
-        UserDetails user = User.withUsername("user")
+        UserDetails user1 = User.withUsername("user")
                 .password("{noop}password")
                 .roles("USER")
                 .build();
-        return new MapReactiveUserDetailsService(user);
+        UserDetails user2 = User.withUsername("user2")
+                .password("{noop}password")
+                .roles("USER")
+                .build();
+        UserDetails user3 = User.withUsername("user3")
+                .password("{noop}password")
+                .roles("USER")
+                .build();
+        return new MapReactiveUserDetailsService(user1, user2, user3);
     }
 
     @Bean

@@ -294,7 +294,7 @@ public class WebScraper {
     private List<VehicleDto> getVehicles(WebElement connection, Date day, String src, String dest, Date start, Date end) {
         return Collections.singletonList(
                 new VehicleDto(
-                        "Flix_"+src+"_"+dest, start, end
+                        "Flix"+src+dest, start, end
                 )
         );
     }

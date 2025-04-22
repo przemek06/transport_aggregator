@@ -88,7 +88,7 @@ public class WebScraper {
             search(searchForm);
             logger.info("Waiting for results");
 
-            WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(15, ChronoUnit.SECONDS));
+            WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(4, ChronoUnit.SECONDS));
             WebElement results = longerWait.until(
                     ExpectedConditions.visibilityOfElementLocated(By.className("search-results"))
             );
