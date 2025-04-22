@@ -117,9 +117,9 @@ public class RPCClient {
         try {
             String responseBody = new String(response.getBody(), StandardCharsets.UTF_8);
 
-            List<OfferDto> offers = objectMapper.readValue(responseBody, new TypeReference<List<OfferDto>>() {});
+            List<OfferDto> offers = objectMapper.readValue(responseBody, new TypeReference<>() {
+            });
             sink.next(offers);
-            sink.complete();
 
         } catch (Exception e) {
             logger.error("Error processing response", e);
