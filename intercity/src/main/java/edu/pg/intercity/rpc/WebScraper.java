@@ -50,88 +50,95 @@ public class WebScraper {
     }
 
     public List<OfferDto> getOffers(QueryDto query) {
-        String source = query.src();
-        String destination = query.dest();
-        Date queryDatetime = query.time();
-
-        WebDriverManager.chromedriver().setup();
-        ChromeOptions options = new ChromeOptions();
-        Map<String, Object> prefs = new HashMap<>();
-        prefs.put("download.default_directory", downloadDir);
-        prefs.put("download.prompt_for_download", false);
-        prefs.put("profile.default_content_settings.popups", 0);
-        prefs.put("safebrowsing.enabled", true);
-        prefs.put("safebrowsing.disable_download_protection", true);
-        options.setExperimentalOption("prefs", prefs);
-        options.addArguments("--headless=chrome");
-        options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36");
-        options.addArguments("--window-size=1920,1080");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--disable-gpu");
-        options.addArguments("--disable-extensions");
-        WebDriver webDriver = new ChromeDriver(options);
-        webDriver.get(URL);
-
-        WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(5, ChronoUnit.SECONDS));
-
-        WebElement cookieConfirm = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")));
-        cookieConfirm.click();
-
-        WebElement searchForm = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.id("searchTrainForm")));
-
-        String src = inputStartLocation(webDriver, searchForm, source);
-        String dest = inputEndLocation(webDriver, searchForm, destination);
-        inputDate(searchForm, queryDatetime, webDriver);
-
+        WebDriver webDriver = null;
         try {
-            Thread.sleep(1000); // 2000 milliseconds = 2 seconds
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            String source = query.src();
+            String destination = query.dest();
+            Date queryDatetime = query.time();
 
-        search(searchForm);
-        logger.info("Waiting for results");
+            WebDriverManager.chromedriver().setup();
+            ChromeOptions options = new ChromeOptions();
+            Map<String, Object> prefs = new HashMap<>();
+            prefs.put("download.default_directory", downloadDir);
+            prefs.put("download.prompt_for_download", false);
+            prefs.put("profile.default_content_settings.popups", 0);
+            prefs.put("safebrowsing.enabled", true);
+            prefs.put("safebrowsing.disable_download_protection", true);
+            options.setExperimentalOption("prefs", prefs);
+            options.addArguments("--headless=chrome");
+            options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36");
+            options.addArguments("--window-size=1920,1080");
+            options.addArguments("--no-sandbox");
+            options.addArguments("--disable-dev-shm-usage");
+            options.addArguments("--disable-gpu");
+            options.addArguments("--disable-extensions");
+            webDriver = new ChromeDriver(options);
+            webDriver.get(URL);
 
-        WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(20, ChronoUnit.SECONDS));
-        cookieConfirm = longerWait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")));
-        cookieConfirm.click();
+            WebDriverWait wait = new WebDriverWait(webDriver, Duration.of(5, ChronoUnit.SECONDS));
 
-        List<OfferDto> offers = new ArrayList<>();
+            WebElement cookieConfirm = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")));
+            cookieConfirm.click();
 
-        List<WebElement> listItems = longerWait.until(
-                ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("li[data-testid='TripPropositionDesktop']")));
+            WebElement searchForm = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.id("searchTrainForm")));
 
-        for (WebElement connection : listItems) {
+            String src = inputStartLocation(webDriver, searchForm, source);
+            String dest = inputEndLocation(webDriver, searchForm, destination);
+            inputDate(searchForm, queryDatetime, webDriver);
+
             try {
-                // Click on the "Buy a ticket" button
-                WebElement buyTicketButton = connection.findElement(By.cssSelector("button[data-testid='TripPropositionDesktop-buy-ticket']"));
-                wait.until(ExpectedConditions.elementToBeClickable(buyTicketButton));
-                buyTicketButton.click();
-
-                List<Date> schedule = extractSchedule(connection, queryDatetime);
-                Date start = schedule.get(0);
-                Date end =  schedule.get(1);
-
-                List<Double> prices = getPrices(connection);
-
-                List<VehicleDto> vehicles = getConnectionDetails(connection, queryDatetime);
-
-
-                OfferDto offer = new OfferDto(src, dest, start, adjustDateIfNeeded(start, end), prices.getFirst(), vehicles, VehicleType.TRAIN);
-                offers.add(offer);
-
-            }
-            catch (Exception e) {
+                Thread.sleep(1000); // 2000 milliseconds = 2 seconds
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            search(searchForm);
+            logger.info("Waiting for results");
+
+            WebDriverWait longerWait = new WebDriverWait(webDriver, Duration.of(20, ChronoUnit.SECONDS));
+            cookieConfirm = longerWait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")));
+            cookieConfirm.click();
+
+            List<OfferDto> offers = new ArrayList<>();
+
+            List<WebElement> listItems = longerWait.until(
+                    ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("li[data-testid='TripPropositionDesktop']")));
+
+            for (WebElement connection : listItems) {
+                try {
+                    // Click on the "Buy a ticket" button
+                    WebElement buyTicketButton = connection.findElement(By.cssSelector("button[data-testid='TripPropositionDesktop-buy-ticket']"));
+                    wait.until(ExpectedConditions.elementToBeClickable(buyTicketButton));
+                    buyTicketButton.click();
+
+                    List<Date> schedule = extractSchedule(connection, queryDatetime);
+                    Date start = schedule.get(0);
+                    Date end = schedule.get(1);
+
+                    List<Double> prices = getPrices(connection);
+
+                    List<VehicleDto> vehicles = getConnectionDetails(connection, queryDatetime);
+
+
+                    OfferDto offer = new OfferDto(src, dest, start, adjustDateIfNeeded(start, end), prices.getFirst(), vehicles, VehicleType.TRAIN);
+                    offers.add(offer);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return offers;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (webDriver != null) {
+                webDriver.quit();
+            }
         }
-
-        return offers;
-
     }
 
     private String inputStartLocation(WebDriver webDriver, WebElement searchForm, String src) {

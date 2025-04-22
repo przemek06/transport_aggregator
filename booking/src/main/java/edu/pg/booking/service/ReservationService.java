@@ -11,6 +11,8 @@ import edu.pg.booking.repository.ReservationRepository;
 import edu.pg.booking.repository.VehicleReservationRepository;
 import edu.pg.booking.user.CurrentUser;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
@@ -40,7 +43,7 @@ public class ReservationService {
 
         for (VehicleDto vehicleDto : offer.vehicles()) {
             int capacity = offer.type().getCapacity();
-            int occupiedSeats = vehicleReservationRepository.findByVehicleIdAndEndTimeGreaterThanAndStartTimeLessThan(
+            int occupiedSeats = vehicleReservationRepository.findByVehicleIdAndEndTimeGreaterThanEqualAndStartTimeLessThanEqual(
                             vehicleDto.id(),
                             vehicleDto.start(),
                             vehicleDto.end())
@@ -56,6 +59,9 @@ public class ReservationService {
         reservation.setStartTime(offer.startTime());
         reservation.setEndTime(offer.endTime());
         reservation.setReservationTime(Instant.now());
+        reservation.setSrc(offer.src());
+        reservation.setDest(offer.dest());
+
         reservationRepository.save(reservation);
 
         for (VehicleDto vehicleDto : offer.vehicles()) {
@@ -94,10 +100,9 @@ public class ReservationService {
 
     private Integer getAvailableSeats(OfferDto offer) {
         int minAvailableSeats = Integer.MAX_VALUE;
-
         for (VehicleDto vehicleDto : offer.vehicles()) {
             int capacity = offer.type().getCapacity();
-            int occupiedSeats = vehicleReservationRepository.findByVehicleIdAndEndTimeGreaterThanAndStartTimeLessThan(
+            int occupiedSeats = vehicleReservationRepository.findByVehicleIdAndEndTimeGreaterThanEqualAndStartTimeLessThanEqual(
                             vehicleDto.id(),
                             vehicleDto.start(),
                             vehicleDto.end())

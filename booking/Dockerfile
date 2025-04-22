@@ -14,6 +14,8 @@ WORKDIR /app
 
 COPY --from=builder /app/target/booking-0.0.1-SNAPSHOT.jar /app/booking-0.0.1-SNAPSHOT.jar
 
-EXPOSE 8090
+# Expose application and debug ports
+EXPOSE 8090 5005
 
-ENTRYPOINT ["java", "-jar", "booking-0.0.1-SNAPSHOT.jar"]
+# Enable remote debugging on port 5005
+ENTRYPOINT ["java", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", "-jar", "booking-0.0.1-SNAPSHOT.jar"]

@@ -67,6 +67,8 @@ function Reservations() {
             <th>Username</th>
             <th>Start Time</th>
             <th>End Time</th>
+            <th>Start station</th>
+            <th>End station</th>
             <th>Reservation Time</th>
           </tr>
         </thead>
@@ -77,6 +79,8 @@ function Reservations() {
               <td>{reservation.username}</td>
               <td>{formatDateTime(reservation.startTime)}</td>
               <td>{formatDateTime(reservation.endTime)}</td>
+              <td>{reservation.src}</td>
+              <td>{reservation.dest}</td>
               <td>{formatDateTime(reservation.reservationTime)}</td>
             </tr>
           ))}

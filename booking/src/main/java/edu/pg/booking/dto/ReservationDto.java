@@ -8,6 +8,8 @@ public record ReservationDto(
          String username,
          Date startTime,
          Date endTime,
+         String src,
+         String dest,
          Instant reservationTime
 ) {
 }
