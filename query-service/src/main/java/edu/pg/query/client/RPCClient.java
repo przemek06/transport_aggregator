@@ -69,13 +69,14 @@ public class RPCClient {
 
                 SimpleMessageListenerContainer container = setupResponseListener(replyQueue, sink);
 
+                logger.info("Sent request = {}", requestMessage);
                 rabbitTemplate.convertAndSend(exchange, "", requestMessage);
 
                 scheduler.schedule(() -> {
                     sink.complete();
                     container.stop();
                     logger.info("Reply timeout");
-                }, 5, TimeUnit.SECONDS);
+                }, 60, TimeUnit.SECONDS);
 
             } catch (Exception e) {
                 sink.complete();

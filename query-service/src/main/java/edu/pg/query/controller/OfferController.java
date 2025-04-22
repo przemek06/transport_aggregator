@@ -29,7 +29,7 @@ public class OfferController {
                                 @PathVariable String dest,
                                 @PathVariable String time) {
         logger.info("Request received");
-        SseEmitter emitter = new SseEmitter(10000L);
+        SseEmitter emitter = new SseEmitter(60000L);
 
         emitter.onTimeout(() -> {
             logger.info("SSE emitter timeout");

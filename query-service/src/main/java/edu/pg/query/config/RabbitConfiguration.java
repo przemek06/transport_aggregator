@@ -46,7 +46,7 @@ public class RabbitConfiguration {
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setReplyTimeout(10000);
+        rabbitTemplate.setReplyTimeout(60000);
         return rabbitTemplate;
     }
 

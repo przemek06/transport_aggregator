@@ -14,6 +14,6 @@ WORKDIR /app
 
 COPY --from=builder /app/target/query-0.0.1-SNAPSHOT.jar /app/query-0.0.1-SNAPSHOT.jar
 
-EXPOSE 8080
+EXPOSE 8081
 
 ENTRYPOINT ["java", "-jar", "query-0.0.1-SNAPSHOT.jar"]
