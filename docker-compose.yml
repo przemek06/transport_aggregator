@@ -70,7 +70,6 @@ services:
     networks:
       - app-network
 
-
   gateway:
     build:
       context: ./gateway
@@ -110,6 +109,18 @@ services:
     ports:
       - "3000:3000"
 
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    deploy:
+      replicas: 1
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
+
