@@ -192,6 +192,7 @@ function Main() {
                     onChange={(e) => setMinSeats(e.target.value)} 
                     min="0" 
                     placeholder="0" />
+            </div>
             <div>
                 <label>Cost:</label>
                 <input 

@@ -25,10 +25,10 @@ public class OfferController {
     private Logger logger = LoggerFactory.getLogger(OfferController.class);
 
     @GetMapping("/offers")
-    public SseEmitter getOffers(@RequestParam String src,
-                                @RequestParam String dest,
-                                @RequestParam String time,
-                                @RequestParam Double maxCost) {
+    public SseEmitter getOffers(@RequestParam(required = false) String src,
+                                @RequestParam(required = false) String dest,
+                                @RequestParam(required = false) String time,
+                                @RequestParam(required = false) Double maxCost) {
         logger.info("Request received");
         SseEmitter emitter = new SseEmitter(10000L);
 
