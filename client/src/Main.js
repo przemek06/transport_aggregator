@@ -5,6 +5,8 @@ function Main() {
     const [src, setSrc] = useState('');
     const [dest, setDest] = useState('');
     const [time, setTime] = useState('');
+    const [maxCost, setMaxCost] = useState('');
+    const [minSeats, setMinSeats] = useState('');
     const [results, setResults] = useState([]);
     const [searches, setSearches] = useState(0);
     const [error, setError] = useState('');
@@ -83,10 +85,16 @@ function Main() {
         setResults([]);
         setSearches((prevSearches) => prevSearches + 1);
 
-        const eventSource = new EventSource(`http://localhost:8080/query/offers/src/${encodeURIComponent(src)}/dest/${encodeURIComponent(dest)}/time/${encodeURIComponent(time)}`, {
+        const params = new URLSearchParams();
+
+        if (src) params.append('src', src);
+        if (dest) params.append('dest', dest);
+        if (time) params.append('time', time);
+        if (maxCost != null) params.append('maxCost', maxCost);
+        
+        const eventSource = new EventSource(`http://localhost:8080/query/offers?${params.toString()}`, {
             withCredentials: true
         });
-
         eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
             setResults((prevResults) => {
@@ -176,6 +184,23 @@ function Main() {
                 <label>Time:</label>
                 <input type="datetime-local" value={time} onChange={(e) => setTime(e.target.value)} />
             </div>
+            <div>
+                <label>Minimum Seats:</label>
+                <input 
+                    type="number" 
+                    value={minSeats} 
+                    onChange={(e) => setMinSeats(e.target.value)} 
+                    min="0" 
+                    placeholder="0" />
+            <div>
+                <label>Cost:</label>
+                <input 
+                    type="text" 
+                    value={maxCost} 
+                    onChange={(e) => setMaxCost(e.target.value)}     
+                    pattern="^\d+(\.\d{0,2})?$"
+                    placeholder="0.00"/>
+            </div>
             <button onClick={handleSearch} disabled={searches > 0}>Search</button>
 
             {(searches > 0) && <p>Fetching offers...</p>}
@@ -199,7 +224,14 @@ function Main() {
                             </tr>
                         </thead>
                         <tbody>
-                            {results.map((offer, offerIndex) => (
+                            {results
+                            .filter(offer => {
+                                if (minSeats) {
+                                    return offer.availableSeats === null || offer.availableSeats === undefined || offer.availableSeats >= minSeats;
+                                }
+                                return true;
+                            })
+                            .map((offer, offerIndex) => (
                                 <tr key={offerIndex}>
                                     <td>{offer.src}</td>
                                     <td>{offer.dest}</td>

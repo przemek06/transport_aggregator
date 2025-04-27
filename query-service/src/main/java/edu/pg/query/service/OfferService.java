@@ -16,8 +16,8 @@ public class OfferService {
 
     private final RPCClient rpcClient;
 
-    public Flux<List<OfferDto>> getOffers(String src, String dest, Date time) {
-        QueryDto query = new QueryDto(src, dest, time);
+    public Flux<List<OfferDto>> getOffers(String src, String dest, Date time, Double maxCost) {
+        QueryDto query = new QueryDto(src, dest, time, maxCost);
         return rpcClient.request(query);
     }
 }

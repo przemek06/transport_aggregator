@@ -5,6 +5,7 @@ import java.util.Date;
 public record QueryDto(
         String src,
         String dest,
-        Date time
+        Date time,
+        Double maxCost
 ) {
 }

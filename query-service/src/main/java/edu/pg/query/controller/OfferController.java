@@ -5,8 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -17,28 +17,33 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 @RestController()
-@RequestMapping("/query/offers")
+@RequestMapping("/query")
 @RequiredArgsConstructor
 public class OfferController {
 
     private final OfferService offerService;
     private Logger logger = LoggerFactory.getLogger(OfferController.class);
 
-    @GetMapping("/src/{src}/dest/{dest}/time/{time}")
-    public SseEmitter getOffers(@PathVariable String src,
-                                @PathVariable String dest,
-                                @PathVariable String time) {
+    @GetMapping("/offers")
+    public SseEmitter getOffers(@RequestParam String src,
+                                @RequestParam String dest,
+                                @RequestParam String time,
+                                @RequestParam Double maxCost) {
         logger.info("Request received");
-        SseEmitter emitter = new SseEmitter(60000L);
+        SseEmitter emitter = new SseEmitter(10000L);
 
         emitter.onTimeout(() -> {
             logger.info("SSE emitter timeout");
         });
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
-        LocalDateTime dateTime = LocalDateTime.parse(time, formatter);
+        Date date = null;
+        if (time != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+            LocalDateTime dateTime = LocalDateTime.parse(time, formatter);
+            date = Date.from(dateTime.atZone(ZoneId.of("Europe/Warsaw")).toInstant());
+        }
 
-        offerService.getOffers(src, dest, Date.from(dateTime.atZone(ZoneId.of("Europe/Warsaw")).toInstant()))
+        offerService.getOffers(src, dest, date, maxCost)
                 .doOnNext(resp -> {
                     try {
                         emitter.send(resp);
