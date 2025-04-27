@@ -1,13 +1,10 @@
 services:
   query-service:
-    build:
-      context: ./query-service
-      dockerfile: Dockerfile
+    image: gresiu/rsww_207125_query-service
     deploy:
       replicas: 1
     depends_on:
-      rabbitmq:
-            condition: service_healthy
+      - rabbitmq
     healthcheck:
       test: ["CMD", "curl", "--silent", "--fail", "http://localhost:8081/actuator/health"]
       interval: 30s
@@ -15,81 +12,66 @@ services:
       start_period: 10s
       timeout: 5s
     networks:
-      - app-network
+      - rsww_207125_network
 
   booking-service:
-    build:
-      context: ./booking
-      dockerfile: Dockerfile
+    image: gresiu/rsww_207125_booking-service
     ports:
-      - "5005:5005"
+      - "20712:5005"
     deploy:
       replicas: 1
     networks:
-      - app-network
+      - rsww_207125_network
+      - admin-mysql_default
 
   polregio-scraper:
-    build:
-      context: ./polregio
-      dockerfile: Dockerfile
+    image: gresiu/rsww_207125_polregio-scraper
     deploy:
       replicas: 1
     depends_on:
-      rabbitmq:
-            condition: service_healthy
-      query-service:
-            condition: service_healthy
+      - rabbitmq
+      - query-service
     networks:
-      - app-network
+      - rsww_207125_network
 
   intercity-scraper:
-    build:
-      context: ./intercity
-      dockerfile: Dockerfile
+    image: gresiu/rsww_207125_intercity-scraper
     deploy:
       replicas: 1
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      query-service:
-        condition: service_healthy
+      - rabbitmq
+      - query-service
     networks:
-      - app-network
+      - rsww_207125_network
 
   flixbus-scraper:
-    build:
-      context: ./flixbus
-      dockerfile: Dockerfile
+    image: gresiu/rsww_207125_flixbus-scraper
     deploy:
       replicas: 1
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      query-service:
-        condition: service_healthy
+      - rabbitmq
+      - query-service
     networks:
-      - app-network
+      - rsww_207125_network
 
   gateway:
-    build:
-      context: ./gateway
-      dockerfile: Dockerfile
+    image: gresiu/rsww_207125_gateway
     ports:
-      - "8080:8080"
+      - "20725:8080"
     deploy:
       replicas: 1
     depends_on:
       - query-service
     networks:
-      - app-network
+      - rsww_207125_network
 
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - "5672:5672"
-      - "15672:15672"
-    expose:
-      - "15672"
+      - "20713:5672"
+      - "20714:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -100,27 +82,28 @@ services:
       timeout: 3s
       retries: 30
     networks:
-      - app-network
+      - rsww_207125_network
 
   client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
+    image: gresiu/rsww_207125_client
     ports:
-      - "3000:3000"
+      - "20727:3000"
 
   eureka-server:
-    build:
-      context: ./eureka-server
-      dockerfile: Dockerfile
+    image: gresiu/rsww_207125_eureka-server
     ports:
-      - "8761:8761"
+      - "20741:8761"
     deploy:
       replicas: 1
     networks:
-      - app-network
+      - rsww_207125_network
 
 networks:
-  app-network:
-    driver: bridge
+  rsww_207125_network:
+    driver: overlay
+  admin-mysql_default:
+    external: true
 
+volumes:
+  rabbitmq-data:
+    driver: local
