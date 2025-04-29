@@ -9,7 +9,7 @@ function Reservations() {
   useEffect(() => {
     const fetchReservations = async () => {
       try {
-        const response = await fetch('http://localhost:20712/reservations/all', {
+        const response = await fetch('http://localhost:20725/reservations/all', {
           method: 'GET',
           credentials: 'include', 
         });

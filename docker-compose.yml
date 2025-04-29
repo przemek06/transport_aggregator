@@ -17,7 +17,7 @@ services:
   booking-service:
     image: gresiu/rsww_207125_booking-service
     ports:
-      - "20712:5005"
+      - "20712:8090"
     deploy:
       replicas: 1
     networks:
@@ -88,6 +88,8 @@ services:
     image: gresiu/rsww_207125_client
     ports:
       - "20727:3000"
+    networks:
+      - rsww_207125_network
 
   eureka-server:
     image: gresiu/rsww_207125_eureka-server

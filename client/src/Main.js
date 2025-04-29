@@ -28,7 +28,7 @@ function Main() {
         setError('');
 
         try {
-            const response = await fetch('http://localhost:20712/reservations/available-seats', {
+            const response = await fetch('http://localhost:20725/available-seats', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ function Main() {
         if (time) params.append('time', time);
         if (maxCost != null) params.append('maxCost', maxCost);
         
-        const eventSource = new EventSource(`http://localhost:20712/query/offers?${params.toString()}`, {
+        const eventSource = new EventSource(`http://localhost:20725/query/offers?${params.toString()}`, {
             withCredentials: true
         });
         eventSource.onmessage = (event) => {
@@ -125,7 +125,7 @@ function Main() {
         }
 
         try {
-            const response = await fetch('http://localhost:20712/reservations', {
+            const response = await fetch('http://localhost:20725/reservations', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
