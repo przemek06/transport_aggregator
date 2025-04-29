@@ -28,7 +28,7 @@ function Main() {
         setError('');
 
         try {
-            const response = await fetch('http://localhost:20725/available-seats', {
+            const response = await fetch('http://localhost:20725/reservations/available-seats', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
