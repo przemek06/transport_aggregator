@@ -101,7 +101,7 @@ public class ReservationService {
     private Integer getAvailableSeats(OfferDto offer) {
         int minAvailableSeats = Integer.MAX_VALUE;
         for (VehicleDto vehicleDto : offer.vehicles()) {
-            int capacity = offer.type().getCapacity();
+            int capacity = offer.maxSeats();
             int occupiedSeats = vehicleReservationRepository.findByVehicleIdAndEndTimeGreaterThanEqualAndStartTimeLessThanEqual(
                             vehicleDto.id(),
                             vehicleDto.start(),

@@ -28,9 +28,9 @@ services:
     networks:
       - app-network
 
-  polregio-scraper:
+  to-scraper:
     build:
-      context: ./polregio
+      context: ./to-service
       dockerfile: Dockerfile
     deploy:
       replicas: 1
@@ -39,34 +39,6 @@ services:
             condition: service_healthy
       query-service:
             condition: service_healthy
-    networks:
-      - app-network
-
-  intercity-scraper:
-    build:
-      context: ./intercity
-      dockerfile: Dockerfile
-    deploy:
-      replicas: 1
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      query-service:
-        condition: service_healthy
-    networks:
-      - app-network
-
-  flixbus-scraper:
-    build:
-      context: ./flixbus
-      dockerfile: Dockerfile
-    deploy:
-      replicas: 1
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      query-service:
-        condition: service_healthy
     networks:
       - app-network
 

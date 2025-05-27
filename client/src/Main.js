@@ -220,7 +220,7 @@ function Main() {
                                 <th>Cost</th>
                                 <th>Type</th>
                                 <th>Vehicles</th>
-                                <th>Available seats</th>
+                                <th>Available/Max Seats</th>
                                 <th>Book</th>
                             </tr>
                         </thead>
@@ -261,7 +261,7 @@ function Main() {
                                         </table>
                                     </td>
                                     <td>
-                                        {offer.availableSeats === null || offer.availableSeats === undefined ? '?' : offer.availableSeats}
+                                        {offer.availableSeats === null || offer.availableSeats === undefined ? '?' : offer.availableSeats} / {offer.maxSeats}
                                     </td>
                                     <td>
                                         <button
