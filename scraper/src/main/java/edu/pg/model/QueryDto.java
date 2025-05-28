@@ -1,10 +1,10 @@
 package edu.pg.model;
 
-import java.util.Date;
+import java.time.Instant;
 
 public record QueryDto(
         String src,
         String dest,
-        Date time
+        Instant time
 ) {
 }

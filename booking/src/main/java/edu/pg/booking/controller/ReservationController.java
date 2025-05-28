@@ -28,10 +28,10 @@ public class ReservationController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<ReservationDto>> getFutureReservations() {
+    public ResponseEntity<List<ReservationDto>> getAllReservations() {
         logger.info("Received getFutureReservations request");
-        List<ReservationDto> futureReservations = reservationService.getFutureReservations();
-        return ResponseEntity.ok(futureReservations);
+        List<ReservationDto> results = reservationService.getAllReservations();
+        return ResponseEntity.ok(results);
     }
 
     @PostMapping("/available-seats")
