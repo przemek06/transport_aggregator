@@ -12,6 +12,9 @@ function Navbar() {
         <li>
           <Link to="/reservations">Reservation</Link>
         </li>
+        <li>
+          <Link to="/import">Import</Link>
+        </li>
       </ul>
     </nav>
   );

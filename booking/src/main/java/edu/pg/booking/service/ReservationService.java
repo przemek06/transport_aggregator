@@ -78,8 +78,6 @@ public class ReservationService {
         Map<Long, List<DomainEvent>> groupedEvents = eventStoreService.getEvents().stream()
                 .collect(Collectors.groupingBy(DomainEvent::getId));
 
-        System.out.println(groupedEvents);
-
         return groupedEvents.keySet().stream()
                 .filter(k -> !EventHelper.isReservationDeleted(groupedEvents.get(k)))
                 .map(k -> {

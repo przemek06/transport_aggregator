@@ -1,4 +1,4 @@
-package edu.pg.to.config;
+package edu.pg.booking.config;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -12,21 +12,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitConfiguration {
-
-    @Value("${rabbit.rpc.exchange}")
-    private String exchangeName;
-
-    @Value("${rabbit.rpc.response.exchange}")
-    private String responseExchangeName;
-
-    @Value("${rabbit.rpc.queue}")
-    private String queueName;
-
-    @Value("${rabbit.import.queue}")
-    private String importQueueName;
-
-    @Value("${rabbit.import.exchange}")
-    private String importExchangeName;
 
     @Value("${rabbit.transaction.exchange}")
     private String transactionExchangeName;
@@ -64,13 +49,6 @@ public class RabbitConfiguration {
     @Bean
     public RabbitAdmin rabbitAdmin(
             ConnectionFactory connectionFactory,
-            @Qualifier("fanoutExchange") FanoutExchange fanoutExchange,
-            DirectExchange rpcResponseExchange,
-            @Qualifier("serviceQueue") Queue serviceQueue,
-            @Qualifier("bindingServiceQueue") Binding binding,
-            @Qualifier("importFanoutExchange") FanoutExchange importFanoutExchange,
-            @Qualifier("importQueue") Queue importQueue,
-            @Qualifier("bindingImportQueue") Binding importBinding,
             @Qualifier("transactionExchangeName") FanoutExchange transactionExchangeName,
             @Qualifier("transactionQueueName") Queue transactionQueueName,
             @Qualifier("transactionBinding") Binding transactionBinding,
@@ -79,15 +57,6 @@ public class RabbitConfiguration {
             @Qualifier("rollbackBinding") Binding rollbackBinding
     ) {
         RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
-        rabbitAdmin.declareExchange(fanoutExchange);
-        rabbitAdmin.declareExchange(rpcResponseExchange);
-        rabbitAdmin.declareQueue(serviceQueue);
-        rabbitAdmin.declareBinding(binding);
-
-        rabbitAdmin.declareExchange(importFanoutExchange);
-        rabbitAdmin.declareQueue(importQueue);
-        rabbitAdmin.declareBinding(importBinding);
-
         rabbitAdmin.declareExchange(transactionExchangeName);
         rabbitAdmin.declareQueue(transactionQueueName);
         rabbitAdmin.declareBinding(transactionBinding);
@@ -106,64 +75,23 @@ public class RabbitConfiguration {
         return rabbitTemplate;
     }
 
-    @Bean( name = "fanoutExchange")
-    public FanoutExchange fanoutExchange() {
-        return new FanoutExchange(exchangeName);
-    }
-
-    @Bean( name = "importFanoutExchange")
-    public FanoutExchange importFanoutExchange() {
-        return new FanoutExchange(importExchangeName);
-    }
-
-    @Bean(name = "serviceQueue")
-    public Queue serviceQueue() {
-        return new Queue(queueName);
-    }
-
-    @Bean(name = "importQueue")
-    public Queue importQueue() {
-        return new Queue(importQueueName);
-    }
-
-    @Bean(name = "bindingServiceQueue")
-    public Binding bindingServiceQueue(
-            @Qualifier("fanoutExchange") FanoutExchange fanoutExchange,
-            @Qualifier("serviceQueue") Queue serviceQueue
-    ) {
-        return BindingBuilder.bind(serviceQueue).to(fanoutExchange);
-    }
-
-    @Bean(name = "bindingImportQueue")
-    public Binding bindingImportQueue(
-            @Qualifier("importFanoutExchange") FanoutExchange importFanoutExchange,
-            @Qualifier("importQueue") Queue importQueue
-    ) {
-        return BindingBuilder.bind(importQueue).to(importFanoutExchange);
-    }
-
-    @Bean
-    public DirectExchange rpcResponseExchange() {
-        return new DirectExchange(responseExchangeName);
-    }
-
     @Bean( name = "transactionExchangeName")
-    public FanoutExchange transactionExchangeName() {
+    public FanoutExchange fanoutExchange() {
         return new FanoutExchange(transactionExchangeName);
     }
 
     @Bean( name = "rollbackExchangeName")
-    public FanoutExchange rollbackExchangeName() {
+    public FanoutExchange importFanoutExchange() {
         return new FanoutExchange(rollbackExchangeName);
     }
 
     @Bean(name = "transactionQueueName")
-    public Queue transactionQueueName() {
+    public Queue serviceQueue() {
         return new Queue(transactionQueueName);
     }
 
     @Bean(name = "rollbackQueueName")
-    public Queue rollbackQueueName() {
+    public Queue importQueue() {
         return new Queue(rollbackQueueName);
     }
 

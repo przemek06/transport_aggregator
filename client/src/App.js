@@ -4,6 +4,7 @@ import Login from './Login';
 import Main from './Main';
 import Navbar from './navbar/Navbar';
 import Reservations from './Reservations';
+import Import from './Import';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/main" element={<Main />} />
         <Route path="/reservations" element={<Reservations />} />
+        <Route path="/import" element={<Import />} />
         <Route path="/" element={<Navigate replace to="/login" />} />
       </Routes>
     </>
