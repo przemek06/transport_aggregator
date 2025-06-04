@@ -6,6 +6,7 @@ import Navbar from './navbar/Navbar';
 import Reservations from './Reservations';
 import Import from './Import';
 import Updates from './updates/Updates';
+import TopDestinations from "./TopDestinations";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function AppContent() {
         <Route path="/import" element={<Import />} />
         <Route path="/updates" element={<Updates />} />
         <Route path="/" element={<Navigate replace to="/login" />} />
+        <Route path="/top-destinations" element={<TopDestinations />} />
       </Routes>
     </>
   );
