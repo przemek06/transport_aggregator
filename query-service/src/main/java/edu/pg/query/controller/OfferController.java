@@ -59,4 +59,20 @@ public class OfferController {
 
         return emitter;
     }
+
+
+    @GetMapping("/updates")
+    public SseEmitter getUpdates() {
+        SseEmitter emitter = new SseEmitter(-1L);
+
+        offerService.getUpdates().subscribe(u -> {
+            try {
+                emitter.send(u);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        return emitter;
+    }
 }

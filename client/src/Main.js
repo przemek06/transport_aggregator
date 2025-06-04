@@ -12,6 +12,58 @@ function Main() {
     const [error, setError] = useState('');
     const [isFetchingSeats, setIsFetchingSeats] = useState(false);
 
+    useEffect(() => {
+        const eventSource = new EventSource('http://localhost:8080/query/updates', {
+            withCredentials: true
+        });
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                const { createdOffers, updatedOffers, deletedOffers } = data;
+
+                setResults((prevResults) => {
+                    let updatedResults = [...prevResults];
+
+                    if (Array.isArray(deletedOffers)) {
+                        updatedResults = updatedResults.filter(offer => !deletedOffers.includes(offer.id));
+                    }
+
+                    if (Array.isArray(updatedOffers)) {
+                        const updatedMap = new Map(updatedOffers.map(offer => [offer.id, offer]));
+                        updatedResults = updatedResults.map(offer =>
+                            updatedMap.has(offer.id)
+                                ? { ...offer, ...updatedMap.get(offer.id), availableSeats: Math.min(offer.availableSeats, updatedMap.get(offer.id).maxSeats) }
+                                : offer
+                        );
+                    }
+
+                    if (Array.isArray(createdOffers)) {
+                        const existingIds = new Set(updatedResults.map(offer => offer.id));
+                        const newOffers = createdOffers
+                            .filter(offer => !existingIds.has(offer.id))
+                            .map(offer => ({ ...offer, availableSeats: null }));
+                        updatedResults = [...updatedResults, ...newOffers];
+                    }
+
+                    return updatedResults;
+                });
+
+            } catch (err) {
+                console.error("Error processing SSE update:", err);
+            }
+        };
+
+        eventSource.onerror = (err) => {
+            console.error('Updates SSE connection error:', err);
+            eventSource.close();
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    }, []);
+
     function formatDate(date) {
         const pad = (n) => n.toString().padStart(2, '0');
         const day = pad(date.getDate());
@@ -213,6 +265,7 @@ function Main() {
                     <table>
                         <thead>
                             <tr>
+                                <th>ID</th>
                                 <th>Source</th>
                                 <th>Destination</th>
                                 <th>Start Time</th>
@@ -234,6 +287,7 @@ function Main() {
                             })
                             .map((offer, offerIndex) => (
                                 <tr key={offerIndex}>
+                                    <td>{offer.id}</td>
                                     <td>{offer.src}</td>
                                     <td>{offer.dest}</td>
                                     <td>{formatDate(new Date(offer.startTime))}</td>

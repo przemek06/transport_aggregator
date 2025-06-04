@@ -2,20 +2,18 @@ package edu.pg.to_import.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.pg.to_import.dto.ImportCommand;
-import edu.pg.to_import.dto.OfferInsertCommand;
-import edu.pg.to_import.dto.VehicleDto;
-import edu.pg.to_import.dto.VehicleType;
+import edu.pg.to_import.dto.*;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.ConnectableFlux;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -26,11 +24,21 @@ public class ImportService {
     @Value("${rabbit.import.exchange}")
     private String exchange;
 
+    private final List<OfferUpdateDto> lastUpdates = Collections.synchronizedList(new ArrayList<>());
+    private final Sinks.Many<OfferUpdateDto> updatesSink = Sinks.many().multicast().onBackpressureBuffer();
+    private final ConnectableFlux<OfferUpdateDto> connectableUpdates = updatesSink.asFlux().publish();
+
+    @PostConstruct
+    public void init() {
+        connectableUpdates.connect();
+    }
+
     public void importData(ImportCommand importCommand) {
         try {
             String payload = objectMapper.writeValueAsString(importCommand);
             System.out.println(importCommand);
             rabbitTemplate.convertAndSend(exchange, "", payload);
+            updateLastUpdates(importCommand);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -80,5 +88,42 @@ public class ImportService {
         }
 
         return result;
+    }
+
+    public List<OfferUpdateDto> getLastUpdates() {
+        return lastUpdates;
+    }
+
+    public Flux<OfferUpdateDto> getUpdatesSink() {
+        return connectableUpdates;
+    }
+
+    private void updateLastUpdates(ImportCommand importCommand) {
+        List<OfferUpdateDto> inserts = importCommand.toCreate()
+                .stream()
+                .map(o -> new OfferUpdateDto(o, null, null, ImportOperation.CREATE))
+                .toList();
+
+        List<OfferUpdateDto> updates = importCommand.toUpdate()
+                .stream()
+                .map(o -> new OfferUpdateDto(null, o, null, ImportOperation.UPDATE))
+                .toList();
+
+        List<OfferUpdateDto> deletes = importCommand.toDelete()
+                .stream()
+                .map(o -> new OfferUpdateDto(null, null, o, ImportOperation.DELETE))
+                .toList();
+
+        deletes.forEach(lastUpdates::addFirst);
+        updates.forEach(lastUpdates::addFirst);
+        inserts.forEach(lastUpdates::addFirst);
+
+        deletes.forEach(u -> updatesSink.emitNext(u, Sinks.EmitFailureHandler.FAIL_FAST));
+        updates.forEach(u -> updatesSink.emitNext(u, Sinks.EmitFailureHandler.FAIL_FAST));
+        inserts.forEach(u -> updatesSink.emitNext(u, Sinks.EmitFailureHandler.FAIL_FAST));
+
+        while (lastUpdates.size() > 10) {
+            lastUpdates.removeLast();
+        }
     }
 }

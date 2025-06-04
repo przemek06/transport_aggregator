@@ -1,0 +1,26 @@
+.updates-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.updates-list {
+    margin-top: 20px;
+}
+
+.update-item {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.update-item p {
+    margin: 5px 0;
+}
+
+.update-item ul {
+    margin-top: 5px;
+    margin-bottom: 0;
+    padding-left: 20px;
+}

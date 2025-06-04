@@ -15,6 +15,9 @@ function Navbar() {
         <li>
           <Link to="/import">Import</Link>
         </li>
+        <li>
+          <Link to="/updates">Updates</Link>
+        </li>
       </ul>
     </nav>
   );
