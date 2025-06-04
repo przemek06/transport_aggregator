@@ -1,17 +1,16 @@
 package edu.pg.query.config;
 
 import jakarta.annotation.PostConstruct;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.FanoutExchange;
-import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class RabbitConfiguration {
@@ -21,6 +20,12 @@ public class RabbitConfiguration {
 
     @Value("${rabbit.rpc.response.exchange}")
     private String responseExchangeName;
+
+    @Value("${rabbit.transaction.exchange}")
+    private String transactionExchangeName;
+
+    @Value("${rabbit.transaction.query.queue}")
+    private String transactionQueueName;
 
     @Value("${rabbit.host}")
     private String host;
@@ -50,9 +55,28 @@ public class RabbitConfiguration {
         return rabbitTemplate;
     }
 
-    @Bean
+    @Primary
+    @Bean(name = "rpcExchange")
     public FanoutExchange rpcExchange() {
         return new FanoutExchange(exchangeName);
+    }
+
+    @Bean(name = "transactionExchange")
+    public FanoutExchange transactionExchange() {
+        return new FanoutExchange(transactionExchangeName);
+    }
+
+    @Bean(name = "transactionQueue")
+    public Queue transactionQueue() {
+        return new Queue(transactionQueueName);
+    }
+
+    @Bean(name = "transactionBinding")
+    public Binding transactionBinding(
+            @Qualifier("transactionExchange") FanoutExchange fanoutExchange,
+            @Qualifier("transactionQueue") Queue queue
+    ) {
+        return BindingBuilder.bind(queue).to(fanoutExchange);
     }
 
     @Bean
@@ -61,10 +85,22 @@ public class RabbitConfiguration {
     }
 
     @Bean
-    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory, FanoutExchange fanoutExchange, DirectExchange rpcResponseExchange) {
+    public RabbitAdmin rabbitAdmin(
+            ConnectionFactory connectionFactory,
+            @Qualifier("rpcExchange") FanoutExchange fanoutExchange,
+            DirectExchange rpcResponseExchange,
+            @Qualifier("transactionExchange") FanoutExchange transactionExchange,
+            @Qualifier("transactionQueue") Queue transactionQueue,
+            @Qualifier("transactionBinding") Binding transactionBinding
+    ) {
         RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
         rabbitAdmin.declareExchange(fanoutExchange);
         rabbitAdmin.declareExchange(rpcResponseExchange);
+
+        rabbitAdmin.declareExchange(transactionExchange);
+        rabbitAdmin.declareQueue(transactionQueue);
+        rabbitAdmin.declareBinding(transactionBinding);
+
         return rabbitAdmin;
     }
 }

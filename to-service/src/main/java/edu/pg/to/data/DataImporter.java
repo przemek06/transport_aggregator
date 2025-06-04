@@ -3,6 +3,7 @@ package edu.pg.to.data;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.pg.to.dto.OfferDto;
+import edu.pg.to.dto.OfferInsertCommand;
 import edu.pg.to.service.OfferService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DataImporter {
     private final OfferService offerService;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PostConstruct
     public void init() {
@@ -27,7 +28,8 @@ public class DataImporter {
             for (String file : jsonFiles) {
                 ClassPathResource resource = new ClassPathResource(file);
                 try (InputStream inputStream = resource.getInputStream()) {
-                    List<OfferDto> offers = objectMapper.readValue(inputStream, new TypeReference<>() {});
+                    List<OfferInsertCommand> offers = objectMapper.readValue(inputStream, new TypeReference<>() {});
+                    offers = offers.stream().map(o -> o.update(60)).toList();
                     offerService.saveOffers(offers);
                 }
             }

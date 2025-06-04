@@ -13,7 +13,8 @@ public record ReservationDto(
          String src,
          String dest,
          Double cost,
-         Date reservationTime
+         Date reservationTime,
+         Long offerId
 ) {
 
     public static ReservationDto create(ReservationCreatedEvent event, Double cost, Integer delay) {
@@ -28,7 +29,8 @@ public record ReservationDto(
                 event.getSrc(),
                 event.getDest(),
                 cost,
-                event.getReservationTime()
+                event.getReservationTime(),
+                event.getOfferId()
         );
     }
 }

@@ -4,18 +4,21 @@ import edu.pg.booking.domain.DomainEvent;
 import edu.pg.booking.domain.ReservationCreatedEvent;
 import edu.pg.booking.domain.ReservationUpdatedEvent;
 import edu.pg.booking.domain.VehicleInfo;
-import edu.pg.booking.dto.OfferDto;
-import edu.pg.booking.dto.ReservationDto;
-import edu.pg.booking.dto.VehicleDto;
+import edu.pg.booking.dto.*;
+import edu.pg.booking.entity.EventType;
 import edu.pg.booking.error.BadRequestException;
 import edu.pg.booking.error.NotEnoughSeatsException;
 import edu.pg.booking.user.CurrentUser;
 import edu.pg.booking.util.EventHelper;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.ConnectableFlux;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +32,15 @@ import java.util.stream.Collectors;
 public class ReservationService {
     
     private final EventStoreService eventStoreService;
+    private final Sinks.Many<ReservationUpdateDto> updatesSink = Sinks.many().multicast().onBackpressureBuffer();
+    private final ConnectableFlux<ReservationUpdateDto> connectableUpdates = updatesSink.asFlux().publish();
+
+    @PostConstruct
+    public void init() {
+        connectableUpdates.connect();
+        publishUpdates();
+        log.info("Reservation service initialized");
+    }
 
     @Lookup
     protected CurrentUser getCurrentUser() {
@@ -77,8 +89,6 @@ public class ReservationService {
     public List<ReservationDto> getAllReservations() {
         Map<Long, List<DomainEvent>> groupedEvents = eventStoreService.getEvents().stream()
                 .collect(Collectors.groupingBy(DomainEvent::getId));
-
-        System.out.println(groupedEvents);
 
         return groupedEvents.keySet().stream()
                 .filter(k -> !EventHelper.isReservationDeleted(groupedEvents.get(k)))
@@ -137,6 +147,31 @@ public class ReservationService {
         }
 
         return minAvailableSeats;
+    }
+
+    private ReservationDto getReservation(Long id) {
+        return getAllReservations().stream().filter(r -> r.id().equals(id)).findFirst().orElse(null);
+    }
+
+    private void publishUpdates() {
+        eventStoreService.getEventsFlux().subscribe(event -> {
+            if (event.getEventType().equals(EventType.RESERVATION_CREATED)) {
+                ReservationDto reservation = getReservation(event.getId());
+                ReservationUpdateDto dto = new ReservationUpdateDto(reservation, null, null, ImportOperation.CREATE);
+                updatesSink.emitNext(dto, Sinks.EmitFailureHandler.FAIL_FAST);
+            } else if (event.getEventType().equals(EventType.RESERVATION_UPDATED)) {
+                ReservationDto reservation = getReservation(event.getId());
+                ReservationUpdateDto dto = new ReservationUpdateDto(null, reservation, null, ImportOperation.UPDATE);
+                updatesSink.emitNext(dto, Sinks.EmitFailureHandler.FAIL_FAST);
+            } else {
+                ReservationUpdateDto dto = new ReservationUpdateDto(null, null, event.getId(), ImportOperation.DELETE);
+                updatesSink.emitNext(dto, Sinks.EmitFailureHandler.FAIL_FAST);
+            }
+        });
+    }
+
+    public Flux<ReservationUpdateDto> getUpdates() {
+        return connectableUpdates;
     }
 
 }
