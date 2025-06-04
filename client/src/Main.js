@@ -82,7 +82,45 @@ function Main() {
             try {
                 const eventData = JSON.parse(event.data);
                 console.log("New Reservation Created Event:", eventData);
-                alert(`New reservation created!\nType: from ${eventData.src} to ${eventData.dest} at ${eventData.startTime}`);
+                const eventText = `New reservation: ${eventData.src} → ${eventData.dest} at ${new Date(eventData.startTime).toLocaleTimeString()}`;
+
+                // Create container if it doesn't exist
+                let container = document.getElementById("notification-container");
+                if (!container) {
+                    container = document.createElement("div");
+                    container.id = "notification-container";
+                    container.style.position = "fixed";
+                    container.style.bottom = "20px";
+                    container.style.right = "20px";
+                    container.style.display = "flex";
+                    container.style.flexDirection = "column-reverse"; // new items go at bottom
+                    container.style.gap = "10px";
+                    container.style.zIndex = 1000;
+                    document.body.appendChild(container);
+                }
+
+                // Create individual notification
+                const notif = document.createElement("div");
+                notif.textContent = eventText;
+                notif.style.background = "#333";
+                notif.style.color = "#fff";
+                notif.style.padding = "10px 15px";
+                notif.style.borderRadius = "6px";
+                notif.style.fontSize = "14px";
+                notif.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)";
+                notif.style.opacity = "0";
+                notif.style.transition = "opacity 0.3s";
+
+                container.appendChild(notif);
+                requestAnimationFrame(() => {
+                    notif.style.opacity = "1";
+                });
+
+                setTimeout(() => {
+                    notif.style.opacity = "0"; // fade out
+                    setTimeout(() => notif.remove(), 300);
+                }, 4000);
+
             } catch (e) {
                 console.error("Error parsing event data:", e);
             }
