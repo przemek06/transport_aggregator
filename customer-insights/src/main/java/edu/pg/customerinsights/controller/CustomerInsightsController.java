@@ -60,8 +60,8 @@ public class CustomerInsightsController {
     public void initEventStreaming() {
         Flux<ReservationCreatedEvent> flux = eventConsumer.getEventFlux();
         flux.subscribe(event -> {
-            if (event.getDestination() != null && !event.getDestination().isBlank()) {
-                destinationCounter.computeIfAbsent(event.getDestination(), k -> new AtomicInteger(0))
+            if (event.getDest() != null && !event.getDest().isBlank()) {
+                destinationCounter.computeIfAbsent(event.getDest(), k -> new AtomicInteger(0))
                         .incrementAndGet();
                 List<String> top5 = getTop5Destinations();
 

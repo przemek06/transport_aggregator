@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.pg.customerinsights.domain.DomainEvent;
 import edu.pg.customerinsights.domain.ReservationCreatedEvent;
-import edu.pg.customerinsights.consumer.RabbitConfig;
+import edu.pg.customerinsights.config.RabbitConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,6 @@ import reactor.core.publisher.Flux;
 @Service
 public class CustomerInsightsConsumer {
 
-    //    private final RabbitTemplate rabbitTemplate;
     private static final Logger log = LoggerFactory.getLogger(CustomerInsightsConsumer.class);
     private final Sinks.Many<ReservationCreatedEvent> eventSink = Sinks.many().multicast().onBackpressureBuffer();
     private final ObjectMapper objectMapper = new ObjectMapper();
