@@ -123,6 +123,21 @@ services:
     networks:
       - app-network
 
+  customer-insights:
+    build:
+      context: ./customer-insights
+      dockerfile: Dockerfile
+    ports:
+      - "8095:8095"
+    deploy:
+      replicas: 1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      booking-service:
+        condition: service_started
+    networks:
+      - app-network
 networks:
   app-network:
     driver: bridge
