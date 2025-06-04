@@ -73,6 +73,31 @@ function Main() {
         return `${day}-${month} ${hours}:${minutes}`;
     }
 
+    useEffect(() => {
+        const eventSource = new EventSource("http://localhost:8080/stream/reservation-created", {
+            withCredentials: true
+        });
+
+        eventSource.addEventListener("booking-event", (event) => {
+            try {
+                const eventData = JSON.parse(event.data);
+                console.log("New Reservation Created Event:", eventData);
+                alert(`New reservation created!\nType: from ${eventData.src} to ${eventData.dest} at ${eventData.startTime}`);
+            } catch (e) {
+                console.error("Error parsing event data:", e);
+            }
+        });
+
+        eventSource.onerror = (err) => {
+            console.error("SSE connection error:", err);
+            eventSource.close();
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    }, []);
+
     const fetchAvailableSeats = async (offersToQuery) => {
         if (offersToQuery.length === 0 || isFetchingSeats) return;
 

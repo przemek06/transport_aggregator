@@ -29,6 +29,11 @@ public class GatewayConfig {
         InstanceInfo toImportInstance = eurekaClient.getNextServerFromEureka("to-import", false);
         String toImportInstanceUrl = toImportInstance.getHomePageUrl();
         logger.info("TO Import URL={}", toImportInstanceUrl);
+
+        InstanceInfo bookingEventServiceInstance = eurekaClient.getNextServerFromEureka("booking-event", false);
+        String bookingEventServiceUrl = bookingEventServiceInstance.getHomePageUrl();
+        logger.info("Booking Event service URL={}", bookingEventServiceUrl);
+
         return builder.routes()
                 .route("query-service-route", r -> r.path("/query/**")
                         .filters(f -> f.addRequestHeader("X-Gateway-Route", "query-service"))
@@ -39,6 +44,9 @@ public class GatewayConfig {
                 .route("to-import-route", r -> r.path("/import/**")
                         .filters(f -> f.addRequestHeader("X-Gateway-Route", "to-import"))
                         .uri(toImportInstanceUrl))
+                .route("booking-event-service-route", r -> r.path("/stream/**")
+                        .filters(f -> f.addRequestHeader("X-Gateway-Route", "booking-event-service"))
+                        .uri(bookingEventServiceUrl))
                 .build();
     }
 }

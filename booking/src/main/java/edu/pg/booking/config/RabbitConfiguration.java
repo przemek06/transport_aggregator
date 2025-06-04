@@ -19,11 +19,17 @@ public class RabbitConfiguration {
     @Value("${rabbit.transaction.rollback.exchange}")
     private String rollbackExchangeName;
 
+    @Value("${rabbit.booking.events.exchange}")
+    private String bookingEventsExchangeName;
+
     @Value("${rabbit.transaction.queue}")
     private String transactionQueueName;
 
     @Value("${rabbit.transaction.rollback.queue}")
     private String rollbackQueueName;
+
+    @Value("${rabbit.booking.events.queue}")
+    private String bookingEventsQueueName;
 
     @Value("${rabbit.host}")
     private String host;
@@ -54,7 +60,10 @@ public class RabbitConfiguration {
             @Qualifier("transactionBinding") Binding transactionBinding,
             @Qualifier("rollbackExchangeName") FanoutExchange rollbackExchangeName,
             @Qualifier("rollbackQueueName") Queue rollbackQueueName,
-            @Qualifier("rollbackBinding") Binding rollbackBinding
+            @Qualifier("rollbackBinding") Binding rollbackBinding,
+            @Qualifier("bookingEventsExchangeName") TopicExchange bookingEventsExchangeName,
+            @Qualifier("bookingEventsQueueName") Queue bookingEventsQueueName,
+            @Qualifier("bookingEventsBinding") Binding bookingEventsBinding
     ) {
         RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
         rabbitAdmin.declareExchange(transactionExchangeName);
@@ -64,6 +73,10 @@ public class RabbitConfiguration {
         rabbitAdmin.declareExchange(rollbackExchangeName);
         rabbitAdmin.declareQueue(rollbackQueueName);
         rabbitAdmin.declareBinding(rollbackBinding);
+
+        rabbitAdmin.declareExchange(bookingEventsExchangeName);
+        rabbitAdmin.declareQueue(bookingEventsQueueName);
+        rabbitAdmin.declareBinding(bookingEventsBinding);
 
         return rabbitAdmin;
     }
@@ -85,6 +98,11 @@ public class RabbitConfiguration {
         return new FanoutExchange(rollbackExchangeName);
     }
 
+    @Bean( name = "bookingEventsExchangeName")
+    public TopicExchange bookingEventsExchange() {
+        return new TopicExchange(bookingEventsExchangeName);
+    }
+
     @Bean(name = "transactionQueueName")
     public Queue serviceQueue() {
         return new Queue(transactionQueueName);
@@ -93,6 +111,11 @@ public class RabbitConfiguration {
     @Bean(name = "rollbackQueueName")
     public Queue importQueue() {
         return new Queue(rollbackQueueName);
+    }
+
+    @Bean(name = "bookingEventsQueueName")
+    public Queue bookingEventsQueue() {
+        return new Queue(bookingEventsQueueName);
     }
 
     @Bean(name = "transactionBinding")
@@ -109,5 +132,15 @@ public class RabbitConfiguration {
             @Qualifier("rollbackQueueName") Queue queue
     ) {
         return BindingBuilder.bind(queue).to(fanoutExchange);
+    }
+
+    @Bean(name = "bookingEventsBinding")
+    public Binding bookingEventsBinding(
+            @Qualifier("bookingEventsExchangeName") TopicExchange topicExchange,
+            @Qualifier("bookingEventsQueueName") Queue queue
+    ) {
+        return BindingBuilder.bind(queue)
+                .to(topicExchange)
+                .with("booking.event.#");
     }
 }
