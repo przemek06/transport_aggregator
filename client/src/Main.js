@@ -33,7 +33,7 @@ function Main() {
                         const updatedMap = new Map(updatedOffers.map(offer => [offer.id, offer]));
                         updatedResults = updatedResults.map(offer =>
                             updatedMap.has(offer.id)
-                                ? { ...offer, ...updatedMap.get(offer.id), availableSeats: Math.min(offer.availableSeats, updatedMap.get(offer.id).maxSeats) }
+                                ? { ...offer, ...updatedMap.get(offer.id), availableSeats: Math.max(0, offer.availableSeats - (offer.maxSeats - updatedMap.get(offer.id).maxSeats)) }
                                 : offer
                         );
                     }
