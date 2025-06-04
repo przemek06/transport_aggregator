@@ -107,6 +107,22 @@ services:
     networks:
       - app-network
 
+  booking-event:
+    build:
+      context: ./booking-event
+      dockerfile: Dockerfile
+    ports:
+      - "8091:8091"
+    deploy:
+      replicas: 1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      booking-service:
+        condition: service_started
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
