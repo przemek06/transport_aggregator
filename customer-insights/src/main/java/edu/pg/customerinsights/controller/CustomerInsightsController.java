@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/stream")
+@RequestMapping("/insights")
 @RequiredArgsConstructor
 public class CustomerInsightsController {
 

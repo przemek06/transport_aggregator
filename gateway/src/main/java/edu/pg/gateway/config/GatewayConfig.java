@@ -51,7 +51,7 @@ public class GatewayConfig {
                 .route("booking-event-service-route", r -> r.path("/stream/**")
                         .filters(f -> f.addRequestHeader("X-Gateway-Route", "booking-event-service"))
                         .uri(bookingEventServiceUrl))
-                .route("customer-insights-service-route", r -> r.path("/stream/**")
+                .route("customer-insights-service-route", r -> r.path("/insights/**")
                         .filters(f -> f.addRequestHeader("X-Gateway-Route", "customer-insights-service"))
                         .uri(customerInsightsServiceUrl))
                 .build();

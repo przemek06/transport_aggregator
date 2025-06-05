@@ -5,10 +5,13 @@ export default function TopDestinations() {
   const [topDestinations, setTopDestinations] = useState([]);
 
   useEffect(() => {
-    const eventSource = new EventSource("http://localhost:8080/stream/top-destinations");
+    const eventSource = new EventSource("http://localhost:8080/insights/top-destinations", {
+      withCredentials: true
+    });
 
     eventSource.addEventListener("top-destinations", (event) => {
       try {
+        console.log("event data: "+ event.data);
         const top5 = JSON.parse(event.data); // array of destination strings
         setTopDestinations(top5);
       } catch (e) {
