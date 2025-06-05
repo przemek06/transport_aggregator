@@ -18,6 +18,9 @@ function Navbar() {
         <li>
           <Link to="/updates">Updates</Link>
         </li>
+        <li>
+          <Link to="/top-destinations">Top Destinations</Link>
+        </li>
       </ul>
     </nav>
   );

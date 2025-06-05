@@ -34,6 +34,10 @@ public class GatewayConfig {
         String bookingEventServiceUrl = bookingEventServiceInstance.getHomePageUrl();
         logger.info("Booking Event service URL={}", bookingEventServiceUrl);
 
+        InstanceInfo customerInsightsServiceInstance = eurekaClient.getNextServerFromEureka("customer-insights", false);
+        String customerInsightsServiceUrl = customerInsightsServiceInstance.getHomePageUrl();
+        logger.info("Customer Insights Service URL={}", customerInsightsServiceUrl);
+
         return builder.routes()
                 .route("query-service-route", r -> r.path("/query/**")
                         .filters(f -> f.addRequestHeader("X-Gateway-Route", "query-service"))
@@ -47,6 +51,9 @@ public class GatewayConfig {
                 .route("booking-event-service-route", r -> r.path("/stream/**")
                         .filters(f -> f.addRequestHeader("X-Gateway-Route", "booking-event-service"))
                         .uri(bookingEventServiceUrl))
+                .route("customer-insights-service-route", r -> r.path("/insights/**")
+                        .filters(f -> f.addRequestHeader("X-Gateway-Route", "customer-insights-service"))
+                        .uri(customerInsightsServiceUrl))
                 .build();
     }
 }
